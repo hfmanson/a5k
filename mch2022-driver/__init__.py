@@ -48,7 +48,7 @@ def button_report(btn_mask, pressed):
 		else:
 			g_btn_state &= ~btn_mask
 		button_report = bytearray([ 0xf4, g_btn_state >> 8, g_btn_state & 0xff, btn_mask >> 8, btn_mask & 0xff ])
-		mch22.fpga_send(bytes(button_report))
+		mch22.fpga_send(button_report)
 
 def on_action_btn_a(pressed):
 	button_report(1 << 9, pressed)
@@ -158,20 +158,17 @@ def load(level):
 	with open(getcwd() + "/" + level + ".raw", "rb") as f:
 		for k in range(0, 1643):
 			# wait for IRQ
-			while mch22.fpga_transaction(bytes(spi_cmd_nop2))[1] == 0:
+			while mch22.fpga_transaction(spi_cmd_nop2)[1] == 0:
 				pass
-			mch22.fpga_send(bytes(spi_cmd_fread_get))
-			mch22.fpga_transaction(bytes(spi_cmd_resp_ack))
-			#print(".", end="")
-			spi_cmd_fread_put = bytearray(0x401)
-			spi_cmd_fread_put[0] = 0xf9
+			mch22.fpga_send(spi_cmd_fread_get)
+			mch22.fpga_transaction(spi_cmd_resp_ack)
 			data = f.read(1024)
 			data_len = len(data)
 			if data_len < 1024:
 				spi_cmd_fread_put = bytearray(0x401)
 				spi_cmd_fread_put[0] = 0xf9
-			spi_cmd_fread_put[1:data_len] = data
-			mch22.fpga_send(bytes(spi_cmd_fread_put))
+			spi_cmd_fread_put[1:data_len + 1] = data
+			mch22.fpga_send(spi_cmd_fread_put)
 
 def start(level):
 	with open(getcwd() + "/" + level + ".bit", "rb") as f:
