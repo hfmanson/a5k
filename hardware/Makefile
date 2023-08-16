@@ -14,7 +14,7 @@ verilator: a5k.si
 		silice-make.py -s a5k.si -b $@ -p basic,vga -o BUILD_$(subst :,_,$@) $(ARGS)
 
 mch2022: a5k.si mch2022prog
-		cd common ; ./download_all.sh ; cd ..
+		#cd common ; ./download_all.sh ; cd ..
 		silice-make.py -s a5k.si -b $@ -p basic,psram,lcd,espspi -o BUILD_$(subst :,_,$@) $(ARGS)
 		# ./build/fpga.py BUILD_mch2022/build.bin
 

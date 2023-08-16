@@ -430,10 +430,11 @@ $$if HDMI then
 $$end
 $$if LCD then
   output uint8 lcd_d,
-  output uint1 lcd_rs,
-  output uint1 lcd_wr_n,
+  inout  uint1 lcd_rs,
+  inout  uint1 lcd_wr_n,
   output uint1 lcd_cs_n(0),
-  output uint1 lcd_rst_n(1),
+  output  uint1 lcd_rst_n(1),
+  //input  uint1 lcd_rst_n,
   input  uint1 lcd_mode,
   input  uint1 lcd_fmark,
 $$end
@@ -529,6 +530,7 @@ $$elseif MCH2022 then
                                                   : screen_init.cmd_data;
   uint1  ctrl_valid   <:: screen_init.initialized ? pix_valid
                                                   : screen_init.valid;
+  
   screen_controller screen(
     in_data      <: ctrl_in_data,
     valid        <: ctrl_valid,
@@ -539,11 +541,13 @@ $$elseif MCH2022 then
     data_or_command  <: screen.send_dc,
     byte             <: screen.send_byte,
     screen_d         :> lcd_d,
-    screen_dc        :> lcd_rs,
-    screen_wrn       :> lcd_wr_n
+    screen_dc        :> lcd_rs.o,
+    screen_wrn       :> lcd_wr_n.o
   );
   lcd_init screen_init(
     ready    <: screen.ready,
+    lcd_mode <: lcd_mode
+    //lcd_rst_n <: lcd_rst_n
   );
   // buttons
   spi_buttons btns(
@@ -713,9 +717,13 @@ $$end
 
     // leds = {vm.pal_swap,rast.pix_wenable,blit.dst_wenable,vm.pix_wenable,vm.page_swap};
     // leds = jstick;
-    leds = vm.leds;
+    // leds = vm.leds;
     // leds = {1b0,rom.in_ready,rom.busy};
     // leds = 0;
+    leds = {1b0, 1b0, screen_init.initialized};
+    
+    lcd_rs.oenable = lcd_mode;                                              
+    lcd_wr_n.oenable = lcd_mode;
 
 $$if SIMULATION then
     if (rast.busy & blit.busy) {

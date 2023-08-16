@@ -5,6 +5,8 @@ unit lcd_init(
   input  uint1  ready,
   output uint1  valid,
   output uint17 cmd_data,
+  input  uint1  lcd_mode,
+  input  uint1  lcd_rst_n,
 ) {
 
   // init sequence for full screen (ILI9341)
@@ -16,15 +18,28 @@ unit lcd_init(
   };
   // algorithm, autoruns
   algorithm <autorun> {
-    // wait for lcd sync from system
-    // while (~lcd_mode) { }
-    // send init sequence
-    init_seq.addr = 0;
-    while (init_seq.addr != 21) {
-      cmd_data      =  {8b0,init_seq.rdata};
-      valid         = 1;
-      init_seq.addr = ready ? (init_seq.addr + 1) : init_seq.addr;
-    }
-    initialized = 1;
+    //while (1) {
+      initialized = 0;
+      // wait for ESP32 to release the screen
+      //while (~lcd_mode) { }
+      //++:
+      
+      // wait for lcd to be reset by the ESP32
+      //while (lcd_rst_n) { }
+      //++:
+      //while (~lcd_rst_n) { }
+      //++:
+      
+      // send init sequence
+      init_seq.addr = 0;
+      while (init_seq.addr != 21) {
+        cmd_data      =  {8b0,init_seq.rdata};
+        valid         = 1;
+        init_seq.addr = ready ? (init_seq.addr + 1) : init_seq.addr;
+      }
+      initialized = 1;
+      //while (lcd_mode) { }
+      //++:
+    //}
   }
 }

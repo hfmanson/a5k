@@ -51,7 +51,25 @@ def button_report(btn_mask, pressed):
 		mch22.fpga_send(button_report)
 
 def on_action_btn_a(pressed):
+	global g_level
+	global g_playing
 	button_report(1 << 9, pressed)
+	if not g_playing:
+		if g_level == 8:
+			mch22.fpga_disable()
+			mch22.lcd_mode(0)
+			mch22.exit_python()
+		else:
+			str_level = str(g_level)
+			display.drawFill(0x000000)
+			display.drawText(10, 10, "Loading", 0xFFFFFF, "dejavusans20")
+			display.drawText(10, 30, "Another world level " + str_level, 0xFFFFFF, "dejavusans20")
+			display.flush()
+			with open(getcwd() + "/write_spi.bin", "rb") as f:
+				mch22.fpga_load(f.read())
+			load(str_level)
+			start(str_level)
+			g_playing = True
 
 def on_action_btn_b(pressed):
 	button_report(1 << 10, pressed)
@@ -76,10 +94,26 @@ def on_action_btn_menu(pressed):
 		#	g_playing = True
 		
 def on_action_btn_select(pressed):
+	global g_level
+	global g_playing
+
 	button_report(1 << 7, pressed)
+	if not g_playing and g_level > 1 and pressed:
+		level_button(g_level, False)
+		g_level -= 1
+		level_button(g_level, True)
+		display.flush()
 
 def on_action_btn_start(pressed):
+	global g_level
+	global g_playing
+
 	button_report(1 << 8, pressed)
+	if not g_playing and g_level < 8 and pressed:
+		level_button(g_level, False)
+		g_level += 1
+		level_button(g_level, True)
+		display.flush()
 
 def on_action_btn_left(pressed):
 	button_report(1 << 2, pressed)
@@ -168,7 +202,7 @@ def load(level):
 				spi_cmd_fread_put = bytearray(0x401)
 				spi_cmd_fread_put[0] = 0xf9
 			spi_cmd_fread_put[1:data_len + 1] = data
-			mch22.fpga_send(spi_cmd_fread_put)
+			mch22.fpga_send_turbo(spi_cmd_fread_put)
 
 def start(level):
 	with open(getcwd() + "/" + level + ".bit", "rb") as f:
